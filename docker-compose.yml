@@ -20,6 +20,6 @@ services:
     volumes:
       - .:/home/app
     ports:
-      - "3000:3000"
+      - "9292:9292"
     depends_on:
       - db

@@ -17,4 +17,4 @@ RUN apk update && \
 
 WORKDIR /home/app
 
-EXPOSE 3000
+EXPOSE 9292
