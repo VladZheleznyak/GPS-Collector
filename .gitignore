@@ -1,3 +1,6 @@
+# RubyMine
+/.idea
+
 *.gem
 *.rbc
 /.config
