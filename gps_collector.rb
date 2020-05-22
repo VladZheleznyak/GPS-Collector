@@ -22,7 +22,7 @@ class GpsCollector
     if (method == 'POST') && (path == 'add_points')
       add_points(body, body_json)
     elsif (method == 'GET') && (path == 'points_within_radius')
-      points_within_radius(body_json)
+      points_within_radius(body, body_json)
     elsif (method == 'GET') && (path == 'points_within_polygon')
       points_within_polygon(body)
     else
@@ -64,10 +64,10 @@ class GpsCollector
   end
 
   def parse_selected_points(arr)
-    @parser ||= RGeo::WKRep::WKBParser.new
+    @parser ||= RGeo::WKRep::WKTParser.new
 
     arr.map do |row|
-      point = @parser.parse(row['point'])
+      point = @parser.parse(row['st_astext'])
       RGeo::GeoJSON.encode(point)
     end
   end
@@ -126,14 +126,14 @@ class GpsCollector
 
   # Responds w/GeoJSON point(s) within a radius around a point
   # params: GeoJSON Point and integer radius in feet/meters
-  def points_within_radius(body_json)
+  def points_within_radius(body, body_json)
     # TODO: params check, as it for add_points
-    x = body_json['Point']['coordinates'][0]
-    y = body_json['Point']['coordinates'][0]
     r = body_json['Radius']
+    geom = RGeo::GeoJSON.decode(body_json['Point'])
 
-    # TODO: ST_PointInsideCircle is against "the radius values would have to be inclusive", ask
-    arr = exec_params('SELECT point FROM points WHERE ST_PointInsideCircle(point, $1, $2, $3)', '', [x, y, r])
+    # TODO: radius in feet/meters
+
+    arr = exec_params("SELECT ST_AsText(point) FROM points WHERE ST_Distance(point, ST_GeographyFromText('#{geom.as_text}')) <= $1", '', [r])
     answer = parse_selected_points(arr)
     ok_response(answer)
   end
@@ -143,7 +143,7 @@ class GpsCollector
   def points_within_polygon(body)
     geom = RGeo::GeoJSON.decode(body)
 
-    arr = exec_params("SELECT point FROM points WHERE ST_Within(point, ST_GeomFromText('#{geom.as_text}'))", '', [])
+    arr = exec_params("SELECT ST_AsText(point) FROM points WHERE ST_DWithin(point, ST_GeomFromText('#{geom.as_text}'), 0)", '', [])
     answer = parse_selected_points(arr)
 
     ok_response(answer)
