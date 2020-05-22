@@ -20,7 +20,7 @@ class GpsCollector
     path = env['PATH_INFO'][1..-1]
 
     if (method == 'POST') && (path == 'add_points')
-      add_points(body_json)
+      add_points(body, body_json)
     elsif (method == 'GET') && (path == 'points_within_radius')
       points_within_radius(body_json)
     elsif (method == 'GET') && (path == 'points_within_polygon')
@@ -76,20 +76,30 @@ class GpsCollector
   # params: Array of GeoJSON Point objects or Geometry collection
 
   # TODO: "Array of GeoJSON"
-  def add_points(body_json)
-    # TODO: Geometry collection
-    if !body_json.kind_of?(Array)
-      return error_response('Params for add_points should be Array of GeoJSON Point objects or Geometry collection')
+  def add_points(body, body_json)
+    coordinates = []
+
+    if body_json.kind_of?(Array)
+      body_json.each do |point|
+        return error_response('All types in the array must be "Point"') if point['type'] != 'Point'
+        return error_response('Coordinates section misformatted') if !point['coordinates'].kind_of?(Array)
+        return error_response('Coordinates section should contain exactly two numbers') if point['coordinates'].length != 2
+        return error_response('Coordinates should be numeric') if point['coordinates'].any? {|c| !c.is_a?(Numeric)} # TODO: kind_of vs is_a
+        coordinates << point['coordinates']
+      end
+    else
+      geom = RGeo::GeoJSON.decode(body)
+      # TODO: RGeo::Cartesian::GeometryCollectionImpl: geo instead of geom???
+      return error_response('Params for add_points should be Array of GeoJSON Point objects or Geometry collection') if geom.nil?
+
+      # TODO: assumption, check this
+      return error_response('All geometries in the collection must be "Point"') if geom.any? {|c| !c.is_a?(RGeo::Cartesian::PointImpl)}
+
+      geom.each do |element|
+        coordinates << [element.x, element.y]
+      end
     end
 
-    coordinates = []
-    body_json.each do |point|
-      return error_response('All types in the array must be "Point"') if point['type'] != 'Point'
-      return error_response('Coordinates section misformatted') if !point['coordinates'].kind_of?(Array)
-      return error_response('Coordinates section should contain exactly two numbers') if point['coordinates'].length != 2
-      return error_response('Coordinates should be numeric') if point['coordinates'].any? {|c| !c.is_a?(Numeric)}
-      coordinates << point['coordinates']
-    end
 
     # TODO: assumption
     return error_response('Should be at least one point in array') if coordinates.length.zero?

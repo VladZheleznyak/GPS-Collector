@@ -19,6 +19,22 @@ describe GpsCollector do
     r1 = test('POST', 'add_points', data)
   end
 
+  # Geometry collection
+  def add_test_points_geo
+    data = '
+      {
+        "type": "GeometryCollection",
+        "geometries": [
+           {"type": "Point", "coordinates": [0, 0]},
+           {"type": "Point", "coordinates": [10, 0]},
+           {"type": "Point", "coordinates": [20, 0]},
+           {"type": "Point", "coordinates": [30, 0]}
+        ]
+      }
+    '
+    r1 = test('POST', 'add_points', data)
+  end
+
   def test(method, endpoint, data)
     rack_input = Minitest::Mock.new
     rack_input.expect :read, data
@@ -51,7 +67,8 @@ describe GpsCollector do
   end
 
   it 'add points and find them within a geographical polygon' do
-    add_test_points
+    add_test_points_geo
+    # TODO: draw this
     data = '
       {
          "type": "Polygon",
