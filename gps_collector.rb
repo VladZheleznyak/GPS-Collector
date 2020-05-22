@@ -1,5 +1,6 @@
 require 'pg'
 require 'json'
+require 'rgeo/geo_json'
 
 class GpsCollector
   def call(env)
@@ -15,9 +16,11 @@ class GpsCollector
     body = req.body.read
     begin
       body_json = JSON.parse(body)
+      pp body_json
     rescue JSON::ParserError
       return error_response('Error in data, should be JSON')
     end
+
     method = env['REQUEST_METHOD']
     path = env['PATH_INFO'][1..-1]
 
@@ -26,7 +29,7 @@ class GpsCollector
     elsif (method == 'GET') && (path == 'points_within_radus')
       points_within_radus(body_json)
     elsif (method == 'GET') && (path == 'points_within_polygon')
-      points_within_polygon(body_json)
+      points_within_polygon(body)
     else
       error_response("Unknown method and path combination: #{method} #{path}")
     end
@@ -64,7 +67,6 @@ class GpsCollector
   # Accepts GeoJSON point(s) to be inserted into a database table
   # params: Array of GeoJSON Point objects or Geometry collection
   def add_points(body_json)
-    pp body_json
     # TODO: Geometry collection
     if !body_json.kind_of?(Array)
       return error_response('Params for add_points should be Array of GeoJSON Point objects or Geometry collection')
@@ -105,14 +107,12 @@ class GpsCollector
   # Responds w/GeoJSON point(s) within a radius around a point
   # params: GeoJSON Point and integer radius in feet/meters
   def points_within_radus(body_json)
-    pp body_json
-
     # TODO: params check, as it for add_points
     x = body_json['Point']['coordinates'][0]
     y = body_json['Point']['coordinates'][0]
     r = body_json['Radius']
 
-    arr = exec_params('SELECT  ST_X(point), ST_Y(point) FROM points WHERE ST_PointInsideCircle(point, $1, $2, $3)', '', [x, y, r])
+    arr = exec_params('SELECT ST_X(point), ST_Y(point) FROM points WHERE ST_PointInsideCircle(point, $1, $2, $3)', '', [x, y, r])
     answer = arr.map do |row|
       {
           'Point' => {
@@ -125,7 +125,21 @@ class GpsCollector
     ok_response(answer)
   end
 
-  def points_within_polygon(body_json)
-    ok_response({})
+  # Responds w/GeoJSON point(s) within a geographical polygon
+  # params: GeoJSON Polygon with no holes
+  def points_within_polygon(body)
+    geom = RGeo::GeoJSON.decode(body)
+
+    arr = exec_params("SELECT ST_X(point), ST_Y(point) FROM points WHERE ST_Within(point, ST_GeomFromText('#{geom.as_text}'))", '', [])
+    answer = arr.map do |row|
+      {
+          'Point' => {
+              'type' => 'Point',
+              'coordinates': [row['st_x'], row['st_y']]
+          }
+      }
+    end
+
+    ok_response(answer)
   end
 end
