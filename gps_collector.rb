@@ -64,8 +64,19 @@ class GpsCollector
     arr
   end
 
+  def parse_selected_points(arr)
+    @parser ||= RGeo::WKRep::WKBParser.new
+
+    arr.map do |row|
+      point = @parser.parse(row['point'])
+      RGeo::GeoJSON.encode(point)
+    end
+  end
+
   # Accepts GeoJSON point(s) to be inserted into a database table
   # params: Array of GeoJSON Point objects or Geometry collection
+
+  # TODO: "Array of GeoJSON"
   def add_points(body_json)
     # TODO: Geometry collection
     if !body_json.kind_of?(Array)
@@ -112,16 +123,8 @@ class GpsCollector
     y = body_json['Point']['coordinates'][0]
     r = body_json['Radius']
 
-    arr = exec_params('SELECT ST_X(point), ST_Y(point) FROM points WHERE ST_PointInsideCircle(point, $1, $2, $3)', '', [x, y, r])
-    answer = arr.map do |row|
-      {
-          'Point' => {
-              'type' => 'Point',
-              'coordinates': [row['st_x'], row['st_y']]
-          }
-      }
-    end
-
+    arr = exec_params('SELECT point FROM points WHERE ST_PointInsideCircle(point, $1, $2, $3)', '', [x, y, r])
+    answer = parse_selected_points(arr)
     ok_response(answer)
   end
 
@@ -130,15 +133,8 @@ class GpsCollector
   def points_within_polygon(body)
     geom = RGeo::GeoJSON.decode(body)
 
-    arr = exec_params("SELECT ST_X(point), ST_Y(point) FROM points WHERE ST_Within(point, ST_GeomFromText('#{geom.as_text}'))", '', [])
-    answer = arr.map do |row|
-      {
-          'Point' => {
-              'type' => 'Point',
-              'coordinates': [row['st_x'], row['st_y']]
-          }
-      }
-    end
+    arr = exec_params("SELECT point FROM points WHERE ST_Within(point, ST_GeomFromText('#{geom.as_text}'))", '', [])
+    answer = parse_selected_points(arr)
 
     ok_response(answer)
   end
