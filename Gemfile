@@ -9,6 +9,7 @@ end
 
 gem 'rack'
 gem 'minitest'
+gem 'minitest-reporters'
 
 # Use postgresql as the database for Active Record
 gem 'pg'

@@ -1,19 +1,14 @@
 require 'pg'
 require 'json'
+require 'rack'
 require 'rgeo/geo_json'
 
 class GpsCollector
   def call(env)
-    # TODO: multithread?
-    @conn ||= PG.connect( host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector' ) # TODO credentials
-    # TODO: DB error processing on connect and exec
-
-    req = Rack::Request.new(env)
-
     # TODO: check header 'content-type: application/json' ???
     # TODO: parse after method/path check
     # ignore GET params to process large polygons
-    body = req.body.read
+    body = env['rack.input'].read
     begin
       body_json = JSON.parse(body)
       pp body_json
@@ -26,8 +21,8 @@ class GpsCollector
 
     if (method == 'POST') && (path == 'add_points')
       add_points(body_json)
-    elsif (method == 'GET') && (path == 'points_within_radus')
-      points_within_radus(body_json)
+    elsif (method == 'GET') && (path == 'points_within_radius')
+      points_within_radius(body_json)
     elsif (method == 'GET') && (path == 'points_within_polygon')
       points_within_polygon(body)
     else
@@ -48,10 +43,14 @@ class GpsCollector
     [200, {'Content-Type' => 'application/json'}, [answer.to_json]]
   end
 
-  def exec_params(sql, params_s, params_values)
+  def exec_params(sql, params_s = '', params_values = [])
     puts 'exec_params=============='
     puts "#{sql} #{params_s}"
     puts "#{params_values}"
+
+    # TODO: multithread?
+    @conn ||= PG.connect( host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector' ) # TODO credentials
+    # TODO: DB error processing on connect and exec
 
     # TODO
     arr = []
@@ -117,12 +116,13 @@ class GpsCollector
 
   # Responds w/GeoJSON point(s) within a radius around a point
   # params: GeoJSON Point and integer radius in feet/meters
-  def points_within_radus(body_json)
+  def points_within_radius(body_json)
     # TODO: params check, as it for add_points
     x = body_json['Point']['coordinates'][0]
     y = body_json['Point']['coordinates'][0]
     r = body_json['Radius']
 
+    # TODO: ST_PointInsideCircle is against "the radius values would have to be inclusive", ask
     arr = exec_params('SELECT point FROM points WHERE ST_PointInsideCircle(point, $1, $2, $3)', '', [x, y, r])
     answer = parse_selected_points(arr)
     ok_response(answer)
