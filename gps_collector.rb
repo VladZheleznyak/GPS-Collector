@@ -3,6 +3,10 @@ require 'json'
 
 class GpsCollector
   def call(env)
+    # TODO: multithread?
+    @conn ||= PG.connect( host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector' ) # TODO credentials
+    # TODO: DB error processing on connect and exec
+
     req = Rack::Request.new(env)
 
     # TODO: check header 'content-type: application/json' ???
@@ -41,6 +45,22 @@ class GpsCollector
     [200, {'Content-Type' => 'application/json'}, [answer.to_json]]
   end
 
+  def exec_params(sql, params_s, params_values)
+    puts 'exec_params=============='
+    puts "#{sql} #{params_s}"
+    puts "#{params_values}"
+
+    # TODO
+    arr = []
+    @conn.exec_params( "#{sql} #{params_s}", params_values) do |result|
+      result.each do |row|
+        arr << row
+      end
+    end
+    pp arr
+    arr
+  end
+
   # Accepts GeoJSON point(s) to be inserted into a database table
   # params: Array of GeoJSON Point objects or Geometry collection
   def add_points(body_json)
@@ -62,28 +82,22 @@ class GpsCollector
     # TODO: assumption
     return error_response('Should be at least one point in array') if coordinates.length.zero?
 
-    # TODO: multithread?
-    @conn ||= PG.connect( host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector' ) # TODO credentials
-    # TODO: DB error processing on connect and exec
-
-    # TODO: check SQL-injections
-    # TODO: is the syntaxis optimal for PG?
+    # TODO: is the syntax optimal for PG?
 
     params = []
     params_values = []
     coordinates.each_with_index do |coord, idx|
-      params << "(POINT($#{idx * 2 + 1}, $#{idx * 2 + 2}))"
-      params_values += coord
-    end
+      # params << "(ST_GeomFromText('POINT($#{idx * 2 + 1} $#{idx * 2 + 2})'))"
+      # params_values << coord[0]
 
+      # TODO: SQL-injections here
+      x = coord[0].to_s
+      y = coord[1].to_s
+      params << "(ST_GeomFromText('POINT(#{x} #{y})'))"
+    end
     params_s = params.join(', ')
 
-    @conn.exec_params( "INSERT INTO public.points(point) VALUES #{params_s}", params_values) do |result|
-      result.each do |row|
-        puts '----------'
-        pp row
-      end
-    end
+    exec_params('INSERT INTO points (point) VALUES', params_s, params_values)
 
     ok_response({})
   end
@@ -91,7 +105,24 @@ class GpsCollector
   # Responds w/GeoJSON point(s) within a radius around a point
   # params: GeoJSON Point and integer radius in feet/meters
   def points_within_radus(body_json)
-    ok_response({})
+    pp body_json
+
+    # TODO: params check, as it for add_points
+    x = body_json['Point']['coordinates'][0]
+    y = body_json['Point']['coordinates'][0]
+    r = body_json['Radius']
+
+    arr = exec_params('SELECT  ST_X(point), ST_Y(point) FROM points WHERE ST_PointInsideCircle(point, $1, $2, $3)', '', [x, y, r])
+    answer = arr.map do |row|
+      {
+          'Point' => {
+              'type' => 'Point',
+              'coordinates': [row['st_x'], row['st_y']]
+          }
+      }
+    end
+
+    ok_response(answer)
   end
 
   def points_within_polygon(body_json)
