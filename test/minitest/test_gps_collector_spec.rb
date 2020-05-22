@@ -49,6 +49,34 @@ describe GpsCollector do
     _(r2).must_equal expected
   end
 
+  it 'add points and find them within a radius in feet around a point' do
+    data = '
+      [
+        {"type": "Point", "coordinates": [0, 0]},
+        {"type": "Point", "coordinates": [10, 0]},
+        {"type": "Point", "coordinates": [20, 0]},
+        {"type": "Point", "coordinates": [30, 0]}
+      ]
+    '
+    r1 = test('POST', 'add_points', data)
+    _(r1.first).must_equal 200
+
+    data = '
+      {
+        "Point" : {"type": "Point", "coordinates": [0, 0]},
+        "Radius": 1113194.90793274,
+        "Radius measure": "feet"
+      }
+    '
+    r2 = test('GET', 'points_within_radius', data)
+
+    # TODO: it's against "the radius values would have to be inclusive", should be two points here
+    expected = [200,
+                {'Content-Type' => 'application/json'},
+                ["[{\"type\":\"Point\",\"coordinates\":[0.0,0.0]}]"]]
+    _(r2).must_equal expected
+  end
+
   it 'add points and find them within a geographical polygon' do
     # Geometry collection
     data = '

@@ -128,12 +128,12 @@ class GpsCollector
   # params: GeoJSON Point and integer radius in feet/meters
   def points_within_radius(body, body_json)
     # TODO: params check, as it for add_points
-    r = body_json['Radius']
+    radius = body_json['Radius']
+    radius *= 0.3048 if body_json['Radius measure'] == 'feet' # TODO: document this
+
     geom = RGeo::GeoJSON.decode(body_json['Point'])
 
-    # TODO: radius in feet/meters
-
-    arr = exec_params("SELECT ST_AsText(point) FROM points WHERE ST_Distance(point, ST_GeographyFromText('#{geom.as_text}')) <= $1", '', [r])
+    arr = exec_params("SELECT ST_AsText(point) FROM points WHERE ST_Distance(point, ST_GeographyFromText('#{geom.as_text}')) <= $1", '', [radius])
     answer = parse_selected_points(arr)
     ok_response(answer)
   end
