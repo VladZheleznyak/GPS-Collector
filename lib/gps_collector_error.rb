@@ -1,0 +1,2 @@
+class GpsCollectorError < StandardError
+end

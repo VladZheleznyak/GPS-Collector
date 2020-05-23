@@ -1,8 +1,8 @@
 class DbWrapper
   def self.exec_params(sql, params_values = [])
-    puts 'exec_params=============='
-    puts "#{sql}"
-    puts "#{params_values}"
+    # puts 'exec_params=============='
+    # puts "#{sql}"
+    # puts "#{params_values}"
 
     # TODO: multithread?
     @conn ||= PG.connect( host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector' ) # TODO credentials
@@ -15,9 +15,11 @@ class DbWrapper
         arr << row
       end
     end
-    pp arr
-    arr
+    # pp arr
+    parse_selected_points(arr)
   end
+
+  protected
 
   def self.parse_selected_points(arr)
     @parser ||= RGeo::WKRep::WKTParser.new
