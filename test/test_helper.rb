@@ -1,2 +1,4 @@
 require "minitest/reporters"
-Minitest::Reporters.use!
+require 'color_pound_spec_reporter'
+
+Minitest::Reporters.use! [ColorPoundSpecReporter.new]

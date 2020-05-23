@@ -22,7 +22,7 @@ class GpsCollector
     end
 
     [200, {'Content-Type' => 'application/json'}, [answer.to_json]]
-  rescue GpsCollectorError => e
+  rescue GpsCollectorError, ArgumentError, RGeo::Error::RGeoError => e
     [400, {'Content-Type' => 'application/json'}, [{'error' => e.message}.to_json]]
     # TODO: write a comment about exceptions handling like DB. At prod they should be hidden
   end

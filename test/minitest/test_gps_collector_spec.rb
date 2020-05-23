@@ -25,12 +25,14 @@ describe GpsCollector do
     # latitude: first parameter, -180 to 180 around earth axis
     # longitude: second parameter, -90 to 90 from the equator to the poles
     data = '
-      [
-        {"type": "Point", "coordinates": [0, 0]},
-        {"type": "Point", "coordinates": [10, 0]},
-        {"type": "Point", "coordinates": [20, 0]},
-        {"type": "Point", "coordinates": [30, 0]}
-      ]
+      {
+        "Points": [
+          {"type": "Point", "coordinates": [0, 0]},
+          {"type": "Point", "coordinates": [10, 0]},
+          {"type": "Point", "coordinates": [20, 0]},
+          {"type": "Point", "coordinates": [30, 0]}
+        ]
+      }
     '
     r1 = test('POST', 'add_points', data)
     _(r1.first).must_equal 200
@@ -52,12 +54,14 @@ describe GpsCollector do
 
   it 'add points and find them within a radius in feet around a point' do
     data = '
-      [
-        {"type": "Point", "coordinates": [0, 0]},
-        {"type": "Point", "coordinates": [10, 0]},
-        {"type": "Point", "coordinates": [20, 0]},
-        {"type": "Point", "coordinates": [30, 0]}
-      ]
+      {
+        "Points": [
+          {"type": "Point", "coordinates": [0, 0]},
+          {"type": "Point", "coordinates": [10, 0]},
+          {"type": "Point", "coordinates": [20, 0]},
+          {"type": "Point", "coordinates": [30, 0]}
+        ]
+      }
     '
     r1 = test('POST', 'add_points', data)
     _(r1.first).must_equal 200
@@ -82,13 +86,15 @@ describe GpsCollector do
     # Geometry collection
     data = '
       {
-        "type": "GeometryCollection",
-        "geometries": [
-           {"type": "Point", "coordinates": [0, 0]},
-           {"type": "Point", "coordinates": [10, 0]},
-           {"type": "Point", "coordinates": [20, 0]},
-           {"type": "Point", "coordinates": [30, 0]}
-        ]
+        "Points": {
+          "type": "GeometryCollection",
+          "geometries": [
+             {"type": "Point", "coordinates": [0, 0]},
+             {"type": "Point", "coordinates": [10, 0]},
+             {"type": "Point", "coordinates": [20, 0]},
+             {"type": "Point", "coordinates": [30, 0]}
+          ]
+        }
       }
     '
     r1 = test('POST', 'add_points', data)
@@ -98,17 +104,19 @@ describe GpsCollector do
     # TODO: draw this
     data = '
       {
-         "type": "Polygon",
-         "coordinates": [
-             [
-                 [0, -5],
-                 [25, -5],
-                 [15, 0],
-                 [25, 5],
-                 [0, 5],
-                 [0, -5]
-             ]
-         ]
+        "Polygon": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [0, -5],
+              [25, -5],
+              [15, 0],
+              [25, 5],
+              [0, 5],
+              [0, -5]
+            ]
+          ]
+        }
       }
     '
     r2 = test('GET', 'points_within_polygon', data)
@@ -118,5 +126,6 @@ describe GpsCollector do
                 {'Content-Type' => 'application/json'},
                 ["[{\"type\":\"Point\",\"coordinates\":[0.0,0.0]},{\"type\":\"Point\",\"coordinates\":[10.0,0.0]}]"]]
     _(r2).must_equal expected
+    # TODO: Polygon with 0..3 points???
   end
 end

@@ -10,6 +10,7 @@ end
 gem 'rack'
 gem 'minitest'
 gem 'minitest-reporters'
+gem 'color_pound_spec_reporter'
 
 # Use postgresql as the database for Active Record
 gem 'pg'
