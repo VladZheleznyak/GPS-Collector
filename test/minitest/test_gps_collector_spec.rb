@@ -1,10 +1,11 @@
 require 'minitest/autorun'
+require 'db_wrapper'
 require 'gps_collector.rb'
 
 describe GpsCollector do
   before do
     @gps_collector = GpsCollector.new
-    @gps_collector.send(:exec_params, 'TRUNCATE TABLE points') # TODO: test env
+    DbWrapper.exec_params('TRUNCATE TABLE points') # TODO: test env
   end
 
   def test(method, endpoint, data)
