@@ -32,12 +32,9 @@ class GpsCollector
     # TODO: check header 'content-type: application/json' ???
     # TODO: parse after method/path check
     # ignore GET params to process large polygons
-    begin
-      body = env['rack.input'].read
-      params = JSON.parse(body)
-    rescue JSON::ParserError
-      raise ArgumentError.new('Error in data, should be JSON')
-    end
+
+    body = env['rack.input'].read
+    params = ParamsParser.parse_body(body)
 
     method = env['REQUEST_METHOD']
     path = env['PATH_INFO'][1..-1]

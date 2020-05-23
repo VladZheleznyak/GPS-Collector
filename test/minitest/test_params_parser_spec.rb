@@ -217,4 +217,18 @@ describe ParamsParser do
       _ { ParamsParser.points_within_polygon(params) }.must_raise RGeo::Error::RGeoError
     end
   end
+
+  describe 'corner cases' do
+    it 'must raise ArgumentError if body is empty' do
+      _ { ParamsParser.parse_body(nil) }.must_raise ArgumentError
+    end
+
+    it 'must raise ArgumentError if body is an empty string' do
+      _ { ParamsParser.parse_body(' ') }.must_raise ArgumentError
+    end
+
+    it 'must raise ArgumentError if body is n\'t JSON' do
+      _ { ParamsParser.parse_body('{{{') }.must_raise ArgumentError
+    end
+  end
 end

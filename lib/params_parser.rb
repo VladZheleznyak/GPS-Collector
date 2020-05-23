@@ -1,6 +1,16 @@
 # frozen_string_literal: true
 
 class ParamsParser
+  def self.parse_body(body)
+    raise ArgumentError.new('Data must be sent in request\'s body') if body.nil?
+    begin
+      params = JSON.parse(body)
+    rescue JSON::ParserError
+      raise ArgumentError.new('Error in data, JSON expected')
+    end
+    params
+  end
+
   # params from the spec: Array of GeoJSON Point objects or Geometry collection
   def self.add_points(params)
     points_param = params['Points']

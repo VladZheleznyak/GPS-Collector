@@ -10,16 +10,18 @@ describe GpsCollector do
     DbWrapper.exec_params('TRUNCATE TABLE points') # TODO: test env
   end
 
-  def call_rack(method, endpoint, data,
-                expected_body, expected_status = 200, expected_headers = { 'Content-Type' => 'application/json' })
+  def prepare_env(method, endpoint, data)
     rack_input = Minitest::Mock.new
     rack_input.expect :read, data
 
-    env = {
-      'REQUEST_METHOD' => method,
-      'PATH_INFO' => "/#{endpoint}",
-      'rack.input' => rack_input
+    {
+        'REQUEST_METHOD' => method,
+        'PATH_INFO' => "/#{endpoint}",
+        'rack.input' => rack_input
     }
+  end
+
+  def call_rack(env, expected_body, expected_status = 200, expected_headers = { 'Content-Type' => 'application/json' })
 
     status, headers, body = @gps_collector.call(env)
     _(status).must_equal expected_status
@@ -32,31 +34,49 @@ describe GpsCollector do
   # `POST` - Accepts GeoJSON point(s) to be inserted into a database table
   # params: Array of GeoJSON Point objects or Geometry collection
   describe 'add_points' do
-    it 'adds records from Array of GeoJSON Point objects' do
+    it 'adds one record from Array of GeoJSON Point objects' do
       data = '
-      {
-        "Points": [
-          {"type": "Point", "coordinates": [1, 2]}
-        ]
-      }
-    '
-      call_rack('POST', 'add_points', data, [])
+        {
+          "Points": [
+            {"type": "Point", "coordinates": [1, 2]}
+          ]
+        }
+      '
+
+      env = prepare_env('POST', 'add_points', data)
+      call_rack(env, [])
       db_result_arr = DbWrapper.exec_params('SELECT ST_AsText(point) FROM points')
       _(db_result_arr).must_equal [{ 'st_astext' => 'POINT(1 2)' }]
     end
 
-    it 'adds records from Geometry collection' do
+    it 'adds two records from Array of GeoJSON Point objects' do
       data = '
-      {
-        "Points": {
-          "type": "GeometryCollection",
-          "geometries": [
-             {"type": "Point", "coordinates": [3, 4]}
+        {
+          "Points": [
+            {"type": "Point", "coordinates": [1, 2]},
+            {"type": "Point", "coordinates": [3, 4]}
           ]
         }
-      }
-    '
-      call_rack('POST', 'add_points', data, [])
+      '
+      env = prepare_env('POST', 'add_points', data)
+      call_rack(env, [])
+      db_result_arr = DbWrapper.exec_params('SELECT ST_AsText(point) FROM points')
+      _(db_result_arr.sort_by { |hsh| hsh['st_astext'] }).must_equal [{ 'st_astext' => 'POINT(1 2)' }, { 'st_astext' => 'POINT(3 4)' }]
+    end
+
+    it 'adds records from Geometry collection' do
+      data = '
+        {
+          "Points": {
+            "type": "GeometryCollection",
+            "geometries": [
+               {"type": "Point", "coordinates": [3, 4]}
+            ]
+          }
+        }
+      '
+      env = prepare_env('POST', 'add_points', data)
+      call_rack(env, [])
       db_result_arr = DbWrapper.exec_params('SELECT ST_AsText(point) FROM points')
       _(db_result_arr).must_equal [{ 'st_astext' => 'POINT(3 4)' }]
     end
@@ -82,7 +102,8 @@ describe GpsCollector do
           "Radius": 1113194.90793274
         }
       '
-      call_rack('GET', 'points_within_radius', data,
+      env = prepare_env('GET', 'points_within_radius', data)
+      call_rack(env,
                 [
                   { 'type' => 'Point', 'coordinates' => [0.0, 0.0] },
                   { 'type' => 'Point', 'coordinates' => [10.0, 0.0] }
@@ -91,14 +112,14 @@ describe GpsCollector do
 
     it 'responds w/GeoJSON point(s) within a radius in feet around a point' do
       data = '
-      {
-        "Point" : {"type": "Point", "coordinates": [0, 0]},
-        "Radius": 1113194.90793274,
-        "Radius measure": "feet"
-      }
-    '
-      # TODO: it's against "the radius values would have to be inclusive", should be two points here
-      call_rack('GET', 'points_within_radius', data, [{ 'type' => 'Point', 'coordinates' => [0.0, 0.0] }])
+        {
+          "Point" : {"type": "Point", "coordinates": [0, 0]},
+          "Radius": 1113194.90793274,
+          "Radius measure": "feet"
+        }
+      '
+      env = prepare_env('GET', 'points_within_radius', data)
+      call_rack(env, [{ 'type' => 'Point', 'coordinates' => [0.0, 0.0] }])
     end
   end
 
@@ -135,7 +156,8 @@ describe GpsCollector do
           }
         }
       '
-      call_rack('GET', 'points_within_polygon', data,
+      env = prepare_env('GET', 'points_within_polygon', data)
+      call_rack(env,
                 [
                   { 'type' => 'Point', 'coordinates' => [0.0, 0.0] },
                   { 'type' => 'Point', 'coordinates' => [10.0, 0.0] }
