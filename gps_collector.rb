@@ -3,7 +3,6 @@ require 'json'
 require 'rack'
 require 'rgeo/geo_json'
 
-require './lib/gps_collector_error'
 require './lib/processor'
 
 class GpsCollector
@@ -18,11 +17,11 @@ class GpsCollector
       answer = Processor.points_within_polygon(params)
     else
       # TODO: test
-      raise GpsCollectorError.new("Unknown method and path combination: #{method} #{path}")
+      raise ArgumentError.new("Unknown method and path combination: #{method} #{path}")
     end
 
     [200, {'Content-Type' => 'application/json'}, [answer.to_json]]
-  rescue GpsCollectorError, ArgumentError, RGeo::Error::RGeoError => e
+  rescue ArgumentError, RGeo::Error::RGeoError => e
     [400, {'Content-Type' => 'application/json'}, [{'error' => e.message}.to_json]]
     # TODO: write a comment about exceptions handling like DB. At prod they should be hidden
   end
@@ -37,7 +36,7 @@ class GpsCollector
       body = env['rack.input'].read
       params = JSON.parse(body)
     rescue JSON::ParserError
-      raise GpsCollectorError.new('Error in data, should be JSON')
+      raise ArgumentError.new('Error in data, should be JSON')
     end
 
     method = env['REQUEST_METHOD']
