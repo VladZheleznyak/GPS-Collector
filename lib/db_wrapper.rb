@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DbWrapper
   def self.exec_params(sql, params_values = [])
     # puts 'exec_params=============='
@@ -5,26 +7,25 @@ class DbWrapper
     # puts "#{params_values}"
 
     # TODO: multithread?
-    @conn ||= PG.connect( host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector' ) # TODO credentials
+    # TODO: credentials
+    @conn ||= PG.connect(host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector')
     # TODO: DB error processing on connect and exec
 
     # TODO
-    arr = []
+    db_result_arr = []
     @conn.exec_params(sql, params_values) do |result|
       result.each do |row|
-        arr << row
+        db_result_arr << row
       end
     end
-    # pp arr
-    parse_selected_points(arr)
+    # pp db_result_arr
+    db_result_arr
   end
 
-  protected
-
-  def self.parse_selected_points(arr)
+  def self.parse_selected_points(db_result_arr)
     @parser ||= RGeo::WKRep::WKTParser.new
 
-    arr.map do |row|
+    db_result_arr.map do |row|
       point = @parser.parse(row['st_astext'])
       RGeo::GeoJSON.encode(point)
     end

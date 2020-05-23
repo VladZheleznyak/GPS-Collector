@@ -18,20 +18,22 @@ class Processor
   # params: GeoJSON Point and integer radius in feet/meters
   def self.points_within_radius(params)
     radius_meters, center_point = ParamsParser.points_within_radius(params)
-    DbWrapper.exec_params(
+    db_result_arr = DbWrapper.exec_params(
       'SELECT ST_AsText(point) FROM points WHERE ST_Distance(point, ST_GeographyFromText($1)) <= $2',
       [center_point, radius_meters]
     )
+    DbWrapper.parse_selected_points(db_result_arr)
   end
 
   # Responds w/GeoJSON point(s) within a geographical polygon
   # params: GeoJSON Polygon with no holes
   def self.points_within_polygon(params)
     polygon = ParamsParser.points_within_polygon(params)
-    DbWrapper.exec_params(
+    db_result_arr = DbWrapper.exec_params(
       'SELECT ST_AsText(point) FROM points WHERE ST_DWithin(point, ST_GeomFromText($1), 0)',
       [polygon]
     )
+    DbWrapper.parse_selected_points(db_result_arr)
   end
 
   def self.add_points_prepare_sql(points)
