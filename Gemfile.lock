@@ -39,6 +39,7 @@ GEM
       parser (>= 2.7.0.1)
     ruby-progressbar (1.10.1)
     unicode-display_width (1.7.0)
+    yard (0.9.25)
 
 PLATFORMS
   ruby
@@ -52,6 +53,7 @@ DEPENDENCIES
   rack
   rgeo-geojson
   rubocop
+  yard
 
 BUNDLED WITH
    2.1.4
