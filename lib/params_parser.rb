@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'rgeo/geo_json'
+
 ##
 # This class parses params and checks their validity.
 #
