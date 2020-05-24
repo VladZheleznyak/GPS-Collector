@@ -21,5 +21,6 @@ services:
       - .:/home/app
     ports:
       - "9292:9292"
+      - "8808:8808"
     depends_on:
       - db

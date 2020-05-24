@@ -13,8 +13,21 @@ RUN apk update && \
     $DEV_PACKAGES \
     $RUBY_PACKAGES && \
     rm -rf /var/cache/apk/* && \
-    mkdir -p /usr/src/app
+    gem install bundler
 
 WORKDIR /home/app
 
-EXPOSE 9292
+# install and cache gems
+COPY Gemfile Gemfile.lock ./
+RUN bundle config --delete bin && \
+    bundle install --no-binstubs
+
+# on each `docker-compose up`:
+# 1. try to recreate a table
+# 2. run YARD server on http://localhost:8808/
+# 3. run RACK server on http://localhost:9292/
+CMD ruby -e "require './lib/db_wrapper'; DbWrapper.exec_params('CREATE TABLE  IF NOT EXISTS points (id serial primary key, point geography(POINT))')" && \
+    yard server --reload --bind 0.0.0.0 --daemon && \
+    rackup config.ru -o 0.0.0.0
+
+EXPOSE 8808 9292
