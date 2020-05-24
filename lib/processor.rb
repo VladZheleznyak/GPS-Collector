@@ -37,8 +37,8 @@ class Processor
   end
 
   def self.add_points_prepare_sql(points)
-    # TODO: this way of passing params a bit suspicious, PG executes a new query every time and couldn't prepare it.
-    # Also, each point is wrapped in ST_GeomFromText that adds traffic
+    # TODO: (prod) this way of passing params a bit suspicious, PG executes a new query every time and couldn't
+    # prepare it. Also, each point is wrapped in ST_GeomFromText that adds traffic
     sql_params = []
     sql_params_values = []
     points.each_with_index do |geom, idx|

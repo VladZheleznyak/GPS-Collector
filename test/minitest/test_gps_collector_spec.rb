@@ -7,22 +7,26 @@ require 'gps_collector.rb'
 describe GpsCollector do
   before do
     @gps_collector = GpsCollector.new
-    DbWrapper.exec_params('TRUNCATE TABLE points') # TODO: test env
+
+    # TODO: (prod) test env
+    DbWrapper.exec_params('TRUNCATE TABLE points')
   end
 
-  def prepare_env(method, endpoint, data)
+  def prepare_env(method, endpoint, data, content_type = 'application/json')
     rack_input = Minitest::Mock.new
     rack_input.expect :read, data
 
-    {
-        'REQUEST_METHOD' => method,
-        'PATH_INFO' => "/#{endpoint}",
-        'rack.input' => rack_input
+    result = {
+      'REQUEST_METHOD' => method,
+      'PATH_INFO' => "/#{endpoint}",
+      'rack.input' => rack_input
     }
+    result['CONTENT_TYPE'] = content_type if content_type
+
+    result
   end
 
   def call_rack(env, expected_body, expected_status = 200, expected_headers = { 'Content-Type' => 'application/json' })
-
     status, headers, body = @gps_collector.call(env)
     _(status).must_equal expected_status
     _(headers).must_equal expected_headers
@@ -46,7 +50,7 @@ describe GpsCollector do
       env = prepare_env('POST', 'add_points', data)
       call_rack(env, [])
       db_result_arr = DbWrapper.exec_params('SELECT ST_AsText(point) FROM points')
-      _(db_result_arr).must_equal [{ 'st_astext' => 'POINT(1 2)' }]
+      _(db_result_arr).must_equal [['POINT(1 2)']]
     end
 
     it 'adds two records from Array of GeoJSON Point objects' do
@@ -61,7 +65,7 @@ describe GpsCollector do
       env = prepare_env('POST', 'add_points', data)
       call_rack(env, [])
       db_result_arr = DbWrapper.exec_params('SELECT ST_AsText(point) FROM points')
-      _(db_result_arr.sort_by { |hsh| hsh['st_astext'] }).must_equal [{ 'st_astext' => 'POINT(1 2)' }, { 'st_astext' => 'POINT(3 4)' }]
+      _(db_result_arr.sort).must_equal [['POINT(1 2)'], ['POINT(3 4)']]
     end
 
     it 'adds records from Geometry collection' do
@@ -78,7 +82,7 @@ describe GpsCollector do
       env = prepare_env('POST', 'add_points', data)
       call_rack(env, [])
       db_result_arr = DbWrapper.exec_params('SELECT ST_AsText(point) FROM points')
-      _(db_result_arr).must_equal [{ 'st_astext' => 'POINT(3 4)' }]
+      _(db_result_arr).must_equal [['POINT(3 4)']]
     end
   end
 
@@ -126,7 +130,27 @@ describe GpsCollector do
   # `GET` - Responds w/GeoJSON point(s) within a geographical polygon
   # params: GeoJSON Polygon with no holes
   describe 'points_within_polygon' do
-    before do
+    # This is an integration test for checking points inside a polygon.
+    it 'responds w/GeoJSON point(s) within a geographical polygon' do
+      # Because the calculations done on PG side, we could do test them in whole, without writing a detailed test
+      # for each case. Points:
+      # A - on a border of the polygon. Should be returned in a result
+      # B - inside the polygon. Should be returned in a result
+      # C - outside the polygon. The non-convex polygon algorithm is more complex, so should be tested
+      # D - outside the polygon.
+      # https://pasteboard.co/J9ANXOJ.png draw using https://geoman.io/geojson-editor
+      #  +-------------------------
+      #  |                       /
+      #  |                    /
+      #  |                 /
+      #  |              /
+      #  A         B    *    C         D
+      #  |              \
+      #  |                 \
+      #  |                    \
+      #  |                       \
+      #  +-------------------------
+
       DbWrapper.exec_params('
         INSERT INTO points (point) VALUES
           (ST_GeomFromText(\'POINT(0 0)\')),
@@ -134,11 +158,7 @@ describe GpsCollector do
           (ST_GeomFromText(\'POINT(20 0)\')),
           (ST_GeomFromText(\'POINT(30 0)\'))
       ')
-    end
 
-    it 'responds w/GeoJSON point(s) within a geographical polygon' do
-      # https://pasteboard.co/J9ANXOJ.png draw using https://geoman.io/geojson-editor
-      # TODO: draw this
       data = '
         {
           "Polygon": {
@@ -162,7 +182,16 @@ describe GpsCollector do
                   { 'type' => 'Point', 'coordinates' => [0.0, 0.0] },
                   { 'type' => 'Point', 'coordinates' => [10.0, 0.0] }
                 ])
-      # TODO: it's against "the radius values would have to be inclusive", should be two points here
     end
+  end
+
+  it 'returns an error on unknown combination of method/path' do
+    env = prepare_env('POST', 'points_within_polygon', '{}')
+    call_rack(env, { 'error' => 'Unknown method and path combination: POST points_within_polygon' }, 400)
+  end
+
+  it 'returns an error on improper content_type' do
+    env = prepare_env('POST', 'points_within_polygon', '{}', 'text/html')
+    call_rack(env, { 'error' => 'Content-type must be \'application/json\', \'text/html\' received' }, 400)
   end
 end

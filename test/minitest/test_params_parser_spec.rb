@@ -80,8 +80,6 @@ describe ParamsParser do
 
         _ { ParamsParser.add_points(params) }.must_raise ArgumentError
       end
-
-      # TODO: read more about GeometryCollection
     end
   end
 
@@ -218,7 +216,7 @@ describe ParamsParser do
     end
   end
 
-  describe 'corner cases' do
+  describe 'parse_body' do
     it 'must raise ArgumentError if body is empty' do
       _ { ParamsParser.parse_body(nil) }.must_raise ArgumentError
     end
