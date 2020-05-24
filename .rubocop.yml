@@ -5,14 +5,19 @@ AllCops:
 Layout/LineLength:
   Max: 120
 
-Style/SlicingWithRange:
-  Enabled: false # Prefer ary[n..] over ary[n..-1] - RubyMine 8 highlights this as a mistake
-
-Metrics/MethodLength:
-  Max: 15 # Default 10 is too strict
+Metrics/BlockLength:
+  Enabled: true
+  Exclude:
+    - test/**/* # tests may contain big blocks
 
 Metrics/CyclomaticComplexity:
   Max: 8 # Default 6 is too strict
 
+Metrics/MethodLength:
+  Max: 15 # Default 10 is too strict
+
 Metrics/PerceivedComplexity:
   Max: 9 # Default 7 is too strict
+
+Style/SlicingWithRange:
+  Enabled: false # Prefer ary[n..] over ary[n..-1] - RubyMine 8 highlights this as a mistake

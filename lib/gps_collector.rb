@@ -10,7 +10,6 @@ require './lib/processor'
 #
 # All web/http/rack logic should be placed here.
 class GpsCollector
-
   # Main rack entry method
   # @param env [Hash] Rack {environment}[https://github.com/rack/rack/blob/master/SPEC.rdoc#label-The+Environment]
   # @return [FixNum, Hash, Array] The {status}[https://github.com/rack/rack/blob/master/SPEC.rdoc#label-The+Status],
