@@ -9,6 +9,7 @@ class DbWrapper
     # puts "#{params_values}"
 
     # TODO: (prod) credentials
+    # TODO: (prod) At the moment the multithreading disabled by calling Rack::Lock at config.ru
     @conn ||= PG.connect(host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector')
     # TODO: (prod) DB error processing on connect and exec
 

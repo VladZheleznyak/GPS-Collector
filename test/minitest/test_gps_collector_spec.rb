@@ -4,6 +4,7 @@ require 'minitest/autorun'
 require 'db_wrapper'
 require 'gps_collector.rb'
 
+# Rack::MockRequest and Rack::MockResponse
 describe GpsCollector do
   before do
     @gps_collector = GpsCollector.new
@@ -138,7 +139,7 @@ describe GpsCollector do
       # B - inside the polygon. Should be returned in a result
       # C - outside the polygon. The non-convex polygon algorithm is more complex, so should be tested
       # D - outside the polygon.
-      # https://pasteboard.co/J9ANXOJ.png draw using https://geoman.io/geojson-editor
+      # https://gist.github.com/VladZheleznyak/4179b08bd7b9577a7d8f0de3bfe34fe3 via http://geojson.io/
       #  +-------------------------
       #  |                       /
       #  |                    /
@@ -159,6 +160,8 @@ describe GpsCollector do
           (ST_GeomFromText(\'POINT(30 0)\'))
       ')
 
+      # "MUST follow the right-hand rule with respect to the area it bounds, i.e., exterior rings are counterclockwise"
+      # (c) https://tools.ietf.org/html/rfc7946#section-3.1.6 Polygon
       data = '
         {
           "Polygon": {
