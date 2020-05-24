@@ -120,7 +120,7 @@ describe GpsCollector do
         {
           "Point" : {"type": "Point", "coordinates": [0, 0]},
           "Radius": 1113194.90793274,
-          "Radius measure": "feet"
+          "Radius unit of measure": "feet"
         }
       '
       env = prepare_env('GET', 'points_within_radius', data)

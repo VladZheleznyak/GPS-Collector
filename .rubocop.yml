@@ -8,6 +8,9 @@ Layout/LineLength:
 Style/SlicingWithRange:
   Enabled: false # Prefer ary[n..] over ary[n..-1] - RubyMine 8 highlights this as a mistake
 
+Metrics/MethodLength:
+  Max: 15 # Default 10 is too strict
+
 Metrics/CyclomaticComplexity:
   Max: 8 # Default 6 is too strict
 

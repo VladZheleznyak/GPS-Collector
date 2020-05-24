@@ -96,22 +96,22 @@ describe ParamsParser do
       _(center_point).must_be_kind_of RGeo::Cartesian::PointImpl
     end
 
-    it 'must accept "Radius measure" => "meters" parameter' do
+    it 'must accept "Radius unit of measure" => "meters" parameter' do
       params = {
         'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
         'Radius' => 10,
-        'Radius measure' => 'meters'
+        'Radius unit of measure' => 'meters'
       }
 
       radius, = ParamsParser.points_within_radius(params)
       _(radius).must_equal 10
     end
 
-    it 'must accept "Radius measure" => "feet" parameter' do
+    it 'must accept "Radius unit of measure" => "feet" parameter' do
       params = {
         'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
         'Radius' => 10,
-        'Radius measure' => 'feet'
+        'Radius unit of measure' => 'feet'
       }
 
       radius, = ParamsParser.points_within_radius(params)
@@ -141,11 +141,11 @@ describe ParamsParser do
       _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
     end
 
-    it 'must raise ArgumentError if "Radius measure" isn\'t whitelisted' do
+    it 'must raise ArgumentError if "Radius unit of measure" isn\'t whitelisted' do
       params = {
         'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
         'Radius' => 10,
-        'Radius measure' => 'inches'
+        'Radius unit of measure' => 'inches'
       }
       _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
     end
