@@ -26,7 +26,7 @@ class Processor
   #   {RGeo::Cartesian::PointImpl}[https://www.rubydoc.info/gems/rgeo/RGeo/Cartesian/PointImpl].
   # @return [String, Array] sql text, sql parameters values
   def self.add_points_prepare_sql(points)
-    # TODO: (prod) this way of passing params a bit suspicious, PG every time executes a new query and couldn't
+    # TODO: this way of passing params looks as not optimal, PG every time executes a new query and couldn't
     # prepare it. Also, each point is wrapped in ST_GeomFromText that adds traffic
     sql_params = []
     sql_params_values = []

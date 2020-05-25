@@ -8,7 +8,7 @@ require 'pg'
 # Everything DB-related and DB-specific should be encapsulated here.
 #
 # @todo The class isn't threadsafe. At the moment the multithreading disabled by calling Rack::Lock at config.ru.
-#   To add the support, connection pooling is required
+#   To add the support, connection pooling via Mutex is required
 class DbWrapper
   ##
   # Sends SQL query request specified by sql to PostgreSQL using placeholders for parameters.
@@ -23,8 +23,8 @@ class DbWrapper
   #   => [["POINT(0 0)"], ["POINT(10 0)"], ["POINT(20 0)"], ["POINT(30 0)"]]
 
   def self.exec_params(sql, params = [])
-    # TODO: (prod) credentials
-    # TODO: (prod) At the moment the multithreading disabled by calling Rack::Lock at config.ru
+    # TODO: move credentials to config
+    # At the moment the multithreading disabled by calling Rack::Lock at config.ru
     @conn ||= PG.connect(host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector')
 
     result = @conn.exec_params(sql, params)

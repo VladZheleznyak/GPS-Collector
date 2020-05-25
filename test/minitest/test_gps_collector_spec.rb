@@ -8,7 +8,7 @@ describe GpsCollector do
   before do
     @gps_collector = GpsCollector.new
 
-    # TODO: (prod) test env
+    # TODO: test env
     DbWrapper.exec_params('TRUNCATE TABLE points')
   end
 

@@ -26,7 +26,7 @@ class GpsCollector
     [200, { 'Content-Type' => 'application/json' }, [answer.to_json]]
   rescue ArgumentError, RGeo::Error::RGeoError => e
     # intercept expected exceptions, that are linked with improper user's imput
-    # TODO: (prod) in a real life by security reasons we have to intercept all exceptions and hide a stack trace
+    # TODO: in a real life by security reasons we have to intercept all exceptions and hide a stack trace
 
     [400, { 'Content-Type' => 'application/json' }, [{ 'error' => e.message }.to_json]]
   end

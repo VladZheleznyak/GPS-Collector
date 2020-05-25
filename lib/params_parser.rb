@@ -39,7 +39,7 @@ class ParamsParser
     points = points_param.is_a?(Array) ? add_points_arr(points_param) : add_points_geom(points_param)
 
     # Generally, this is an assumption and should be confirmed by a customer.
-    # From the common sense, it's better to not allow useless empty calls, just to save traffic/resources.
+    # From common sense, it's better to not allow useless empty calls, just to save traffic/resources.
     raise ArgumentError, 'Should be at least one point in the array' if points.length.zero?
 
     points
