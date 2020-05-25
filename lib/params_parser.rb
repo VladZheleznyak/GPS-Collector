@@ -131,8 +131,8 @@ class ParamsParser
     raise ArgumentError, 'Point parameter is required' if params['Point'].nil?
 
     point = RGeo::GeoJSON.decode(params['Point'])
-    raise ArgumentError, 'Polygon parameter is not valid in terms of GeoJSON' if point.nil?
-    raise ArgumentError, 'Polygon parameter must have Polygon type' unless point.instance_of? RGeo::Cartesian::PointImpl
+    raise ArgumentError, 'Point parameter is not valid in terms of GeoJSON' if point.nil?
+    raise ArgumentError, 'Point parameter must have Point type' unless point.instance_of? RGeo::Cartesian::PointImpl
 
     point
   end
