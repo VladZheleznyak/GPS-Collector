@@ -8,25 +8,9 @@ The GitHub repository should also include a functional README.md with full
 instructions on how to lint, test, and start the app and render the software
 documentation. You should use a Docker container for your Postgres/PostGIS db,
 to save yourself some time on setup. 
-​
-##### Dependencies
-​
+
 These are the bare minimum tools required to complete this project. You will
 need and can install as many other tools as you want (except `Rails`).
-​
-- [docker](https://docs.docker.com/install/)
-- [docker-compose](https://docs.docker.com/compose/install/)
-- [psql](https://www.postgresql.org/download/)
-- [ruby](https://www.ruby-lang.org/en/downloads/)
-- [rack](https://github.com/rack/rack)
-​
-### Helpful Links
-​
-- [GeoJSON examples](https://tools.ietf.org/html/rfc7946#appendix-A)
-- [Docker install](https://docs.docker.com/install/)
-- [PostGIS/Postgres Docker container](https://hub.docker.com/r/mdillon/postgis)
-- [Linter](https://docs.rubocop.org/en/stable/)
-- [RDoc](https://ruby.github.io/rdoc/) [YARD](https://yardoc.org)
 
 ## Setup
 Download the project and run
@@ -67,7 +51,7 @@ Finished in 0.10819s
 ```
 
 <details>
-  <summary>Click to expand expected result</summary>
+  <summary>Click to view the test output</summary>
   
 Run 
 ```bash
@@ -142,9 +126,62 @@ Finished in 0.10819s
 params: Array of GeoJSON Point objects or Geometry collection
 
 #### Array of GeoJSON Point objects
+
+```bash
+➜ curl --request POST \
+    --url http://localhost:9292/add_points \
+    --header 'content-type: application/json' \
+    --data '{
+    "Points":[
+      {
+        "type":"Point",
+        "coordinates":[
+          -205.01621,
+          39111.57422
+        ]
+      },
+      {
+        "type":"Point",
+        "coordinates":[
+          10.01621,
+          32
+        ]
+      }
+    ]
+  }'
+```
+
+You may copy the curl request to [Insomnia Core](https://insomnia.rest/) to make your experiments easier. 
  
 #### Geometry collection
-    - add points All geometries in the collection must be "Point"
+    !!!! add points All geometries in the collection must be "Point"
+    
+```bash
+➜ curl --request POST \
+  --url http://localhost:9292/add_points \
+  --header 'content-type: application/json' \
+  --data '{
+  "Points":{
+    "type":"GeometryCollection",
+    "geometries":[
+      {
+        "type":"Point",
+        "coordinates":[
+          100.0,
+          0.0
+        ]
+      },
+      {
+        "type":"Point",
+        "coordinates":[
+          10.0,
+          0.0
+        ]
+      }
+    ]
+  }
+}'
+```
 
 ### Point(s) within a radius around a point
 ​
@@ -153,9 +190,111 @@ params: GeoJSON Point and integer radius in feet/meters
 
 #### Radius in meters (default)
 
+```bash
+➜curl --request GET \
+   --url 'http://localhost:9292/points_within_radius?e=3' \
+   --header 'content-type: application/json' \
+   --data '{
+   "Radius":17000000,
+   "Point":{
+     "type":"Point",
+     "coordinates":[
+       0.01621,
+       0.57422
+     ]
+   }
+ }'
+```
+
 #### Radius in feet
 ​
+```bash
+➜curl --request GET \
+   --url 'http://localhost:9292/points_within_radius?e=3' \
+   --header 'content-type: application/json' \
+   --data '{
+   "Radius":17000000,
+   "Radius unit of measure":"feet",
+   "Point":{
+     "type":"Point",
+     "coordinates":[
+       0.01621,
+       0.57422
+     ]
+   }
+ }'
+```
+
 ### Point(s) within a geographical polygon
 
 `GET` - Responds w/GeoJSON point(s) within a geographical polygon
 params: GeoJSON Polygon with no holes
+
+```bash
+➜curl --request GET \
+   --url http://localhost:9292/points_within_polygon \
+   --header 'content-type: application/json' \
+   --data '{
+   "Polygon":{
+     "type":"Polygon",
+     "coordinates":[
+       [
+         [
+           -120,
+           60
+         ],
+         [
+           120,
+           60
+         ],
+         [
+           120,
+           -60
+         ],
+         [
+           -120,
+           -60
+         ],
+         [
+           -120,
+           60
+         ]
+       ],
+       [
+         [
+           -60,
+           30
+         ],
+         [
+           60,
+           30
+         ],
+         [
+           60,
+           -30
+         ],
+         [
+           -60,
+           -30
+         ],
+         [
+           -60,
+           30
+         ]
+       ]
+     ]
+   }
+ }'
+```
+
+
+## Useful links
+- [docker](https://docs.docker.com/install/)
+- [docker-compose](https://docs.docker.com/compose/install/)
+- [psql](https://www.postgresql.org/download/)
+- [ruby](https://www.ruby-lang.org/en/downloads/)
+- [rack](https://github.com/rack/rack)
+- [GeoJSON examples](https://tools.ietf.org/html/rfc7946#appendix-A)
+- [PostGIS/Postgres Docker container](https://hub.docker.com/r/mdillon/postgis)
+- [Linter(Rubocop)](https://docs.rubocop.org/en/stable/)
+- [YARD](https://yardoc.org)
