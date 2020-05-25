@@ -9,19 +9,6 @@ instructions on how to lint, test, and start the app and render the software
 documentation. You should use a Docker container for your Postgres/PostGIS db,
 to save yourself some time on setup. 
 ​
-### Requirements
-​
-##### Endpoints
-​
-1) `POST` - Accepts GeoJSON point(s) to be inserted into a database table
-   params: Array of GeoJSON Point objects or Geometry collection
-​
-2) `GET` - Responds w/GeoJSON point(s) within a radius around a point
-   params: GeoJSON Point and integer radius in feet/meters
-​
-3) `GET` - Responds w/GeoJSON point(s) within a geographical polygon
-   params: GeoJSON Polygon with no holes
-​
 ##### Dependencies
 ​
 These are the bare minimum tools required to complete this project. You will
@@ -41,7 +28,7 @@ need and can install as many other tools as you want (except `Rails`).
 - [Linter](https://docs.rubocop.org/en/stable/)
 - [RDoc](https://ruby.github.io/rdoc/) [YARD](https://yardoc.org)
 
-# Setup
+## Setup
 Download the project and run
  
 ```bash
@@ -61,7 +48,7 @@ You should now be able:
 - send requests to the application http://localhost:9292/ , see details below
 - connect to DB server via `psql -h localhost -p 5432 -U gps_collector -d gps_collector`
 
-# Lint / Rubocop
+## Lint / Rubocop
 Run 
 ```bash
 ➜ docker exec -it gps-collector_rack_1 rubocop
@@ -71,7 +58,17 @@ Inspecting 10 files
 10 files inspected, no offenses detected
 ```
 
-# Test
+## Test
+Run 
+```bash
+➜ docker exec -it gps-collector_rack_1 rake test 
+Finished in 0.10819s
+35 tests, 63 assertions, 0 failures, 0 errors, 0 skips
+```
+
+<details>
+  <summary>Click to expand expected result</summary>
+  
 Run 
 ```bash
 ➜ docker exec -it gps-collector_rack_1 rake test 
@@ -135,3 +132,30 @@ ParamsParser::points_within_radius
 Finished in 0.10819s
 35 tests, 63 assertions, 0 failures, 0 errors, 0 skips
 ```
+</details>
+
+## Endpoints
+
+### Add points
+​
+`POST` - Accepts GeoJSON point(s) to be inserted into a database table
+params: Array of GeoJSON Point objects or Geometry collection
+
+#### Array of GeoJSON Point objects
+ 
+#### Geometry collection
+    - add points All geometries in the collection must be "Point"
+
+### Point(s) within a radius around a point
+​
+`GET` - Responds w/GeoJSON point(s) within a radius around a point
+params: GeoJSON Point and integer radius in feet/meters
+
+#### Radius in meters (default)
+
+#### Radius in feet
+​
+### Point(s) within a geographical polygon
+
+`GET` - Responds w/GeoJSON point(s) within a geographical polygon
+params: GeoJSON Polygon with no holes
