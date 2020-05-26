@@ -23,9 +23,9 @@ task :add_rnd_points, [:amount] do |_, args|
     end
   }
 
-  time = Benchmark.measure {
+  time = Benchmark.measure do
     Processor.add_points(points)
-  }
+  end
 
   puts "#{amount} points added, realtime = #{time.real}s, #{(amount / time.real).to_i} points per second"
 

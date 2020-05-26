@@ -60,7 +60,7 @@ Finished in 0.10819s
 35 tests, 63 assertions, 0 failures, 0 errors, 0 skips
 ```
 
-*The test clears the main db table. Do not use in production environment!*
+*The test clears the main db table. Do not use in a production environment!*
 
 ## Fill DB with random values
 

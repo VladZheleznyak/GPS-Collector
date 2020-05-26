@@ -26,7 +26,7 @@ class DbWrapper
     begin
       tries ||= 30
 
-      # TODO: move credentials to config
+      # TODO: move credentials to a config file
       # At the moment the multithreading disabled by calling Rack::Lock at config.ru
       @conn ||= PG.connect(host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector')
     rescue PG::ConnectionBad
