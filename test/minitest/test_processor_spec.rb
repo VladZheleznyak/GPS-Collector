@@ -9,20 +9,20 @@ describe Processor do
   end
 
   describe '.add_points' do
-    it 'generates SQL for one point well' do
+    # Unified test add_points
+    # @param hash_params [Hash] Array of GeoJSON Point objects or Geometry collection
+    # @param expected_sql_params [Array] These params expected to be passed to PG
+    def add_points_test(hash_params, expected_sql_params)
       mock = MiniTest::Mock.new
       mock.expect(:call, ['fake_result']) do |sql, params|
         # sql should be formed well
-        _(sql).must_equal 'INSERT INTO points (point) VALUES (ST_GeomFromText($1))'
-
-        # param types should be proper
-        _(params.map { |q| q.class.name }).must_equal ['RGeo::Cartesian::PointImpl']
+        _(sql).must_equal Processor::ADD_POINT_SQL
 
         # param values should be proper
-        _(params.map(&:as_text)).must_equal ['POINT (1.0 2.0)']
+        _(params).must_equal expected_sql_params
       end
       DbWrapper.stub(:exec_params, mock) do
-        result = Processor.add_points({ 'Points' => [{ 'type' => 'Point', 'coordinates' => [1, 2] }] })
+        result = Processor.add_points(hash_params)
 
         # we expect that Processor doesn't break a response from DbWrapper
         _(result).must_equal ['fake_result']
@@ -30,28 +30,23 @@ describe Processor do
       mock.verify
     end
 
+    it 'generates SQL for one point well' do
+      add_points_test({ 'Points' => [{ 'type' => 'Point', 'coordinates' => [1, 2] }] }, ['1.0 2.0'])
+    end
+
     it 'generates SQL for two points well' do
-      mock = MiniTest::Mock.new
-      mock.expect(:call, ['fake_result']) do |sql, params|
-        # sql should be formed well
-        _(sql).must_equal 'INSERT INTO points (point) VALUES (ST_GeomFromText($1)), (ST_GeomFromText($2))'
+      add_points_test({ 'Points' => [
+                        { 'type' => 'Point', 'coordinates' => [1, 2] },
+                        { 'type' => 'Point', 'coordinates' => [3, 4] }
+                      ] },
+                      ['1.0 2.0,3.0 4.0'])
+    end
 
-        # param types should be proper
-        _(params.map { |q| q.class.name }).must_equal %w[RGeo::Cartesian::PointImpl RGeo::Cartesian::PointImpl]
-
-        # param values should be proper
-        _(params.map(&:as_text)).must_equal ['POINT (1.0 2.0)', 'POINT (3.0 4.0)']
-      end
-      DbWrapper.stub(:exec_params, mock) do
-        result = Processor.add_points({ 'Points' => [
-                                        { 'type' => 'Point', 'coordinates' => [1, 2] },
-                                        { 'type' => 'Point', 'coordinates' => [3, 4] }
-                                      ] })
-
-        # we expect that Processor doesn't break a response from DbWrapper
-        _(result).must_equal ['fake_result']
-      end
-      mock.verify
+    it 'generates SQL for complex coordinates well' do
+      add_points_test(
+        { 'Points' => [{ 'type' => 'Point', 'coordinates' => [-179.987654321, -89.987654321] }] },
+        ['-179.987654321 -89.987654321']
+      )
     end
   end
 

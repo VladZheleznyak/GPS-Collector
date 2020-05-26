@@ -17,6 +17,10 @@ desc 'Adds random points to the table'
 task :add_rnd_points, [:amount] do |_, args|
   amount = args[:amount]&.to_i || 10_000
 
+  if amount > 100_000
+    puts 'If you insert more than 100k of records this may require docker reconfiguration for the DB container'
+  end
+
   points = {
     'Points' => Array.new(amount) do
       { 'type' => 'Point', 'coordinates' => [rand(-180...180), rand(-90...90)] }

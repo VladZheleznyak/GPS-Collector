@@ -34,6 +34,8 @@ class DbWrapper
       sleep 1
       retry unless (tries -= 1).zero?
     end
+    # pp sql
+    # pp params
     result = @conn.exec_params(sql, params)
     result.values
   end

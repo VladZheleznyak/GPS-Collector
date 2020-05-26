@@ -42,9 +42,6 @@ class ParamsParser
     # From common sense, it's better to not allow useless empty calls, just to save traffic/resources.
     raise ArgumentError, 'Should be at least one point in the array' if points.length.zero?
 
-    # This is PG SQL limitation
-    raise ArgumentError, 'Should be less than 65535 points in the array' if points.length >= 65_535
-
     points
   end
 

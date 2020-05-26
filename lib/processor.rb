@@ -8,6 +8,13 @@ require './lib/params_parser'
 #
 # Each method described in the requirements must be placed here.
 class Processor
+  ADD_POINT_SQL = '
+    INSERT INTO points (point) (
+      SELECT ST_MakePoint(cast(v[1] as double precision), cast(v[2] as double precision))
+      FROM unnest(regexp_split_to_array($1, \',\')) as q, regexp_split_to_array(q, \' \') as v
+    );
+  '
+
   # Accepts GeoJSON point(s) to be inserted into a database table
   # @example
   #   Processor.add_points({'Points' => [{"type" => "Point", "coordinates" => [1, 2]}]})
@@ -15,29 +22,12 @@ class Processor
   def self.add_points(params)
     # check params
     points = ParamsParser.add_points(params)
-    # generate a variable part of SQL
-    params_s, sql_params_values = add_points_prepare_sql(points)
 
-    DbWrapper.exec_params("INSERT INTO points (point) VALUES #{params_s}", sql_params_values)
-  end
+    # converts the array of points to a string
+    # [POINT(1, 2), POINT(3, 4)] => "1 2,3 4"
+    sql_params_values = points.map { |point| "#{point.x} #{point.y}" }.join(',')
 
-  # Generates a variable part of SQL
-  # @param points [Array<RGeo::Cartesian::PointImpl>] array of
-  #   {RGeo::Cartesian::PointImpl}[https://www.rubydoc.info/gems/rgeo/RGeo/Cartesian/PointImpl].
-  # @return [String, Array] sql text, sql parameters values
-  def self.add_points_prepare_sql(points)
-    # TODO: this way of passing params looks as not optimal, PG every time executes a new query and couldn't
-    # prepare it. Also, each point is wrapped in ST_GeomFromText that adds traffic.
-    # Maybe it worth to be done via PGSQL UNNEST
-    sql_params = []
-    sql_params_values = []
-    points.each_with_index do |geom, idx|
-      sql_params << "(ST_GeomFromText($#{idx + 1}))"
-      sql_params_values << geom
-    end
-    params_s = sql_params.join(', ')
-
-    [params_s, sql_params_values]
+    DbWrapper.exec_params(ADD_POINT_SQL, [sql_params_values])
   end
 
   # Responds w/GeoJSON point(s) within a radius around a point.

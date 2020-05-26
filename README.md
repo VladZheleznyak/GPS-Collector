@@ -71,6 +71,8 @@ Run from the host
   10000 points added, realtime = 0.3697154910041718ms, 27047 points per second
 ```
 
+If you insert more than 100k of records this may require docker reconfiguration for the DB container.
+
 ## Endpoints
 
 ### Add points
