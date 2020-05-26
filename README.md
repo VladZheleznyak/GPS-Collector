@@ -30,15 +30,17 @@ da4481610c49        mdillon/postgis:9.4   "docker-entrypoint.s…"   23 minutes 
 
 You should now be able:
 
-- connect to YARD server via http://localhost:8808 to read a documentation
+- connect to YARD server via [http://localhost:8808](http://localhost:8808/docs/GpsCollector) to read the documentation
 
-- send requests to the application http://localhost:9292, see details below
+- send requests to the application http://localhost:9292, see details below.
 
 - connect to DB server via `psql -h localhost -p 5432 -U gps_collector -d gps_collector`
 
+- connect to a docker rack container to run rubocop and tests.
+
 ## Lint / Rubocop
 
-Run
+Run from the host
  
 ```bash
 ➜ docker exec -it gps-collector_rack_1 rubocop
@@ -50,7 +52,7 @@ Inspecting 10 files
 
 ## Test
 
-Run
+Run from the host
  
 ```bash
 ➜ docker exec -it gps-collector_rack_1 rake test 
