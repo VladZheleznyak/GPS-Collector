@@ -27,7 +27,8 @@ class Processor
   # @return [String, Array] sql text, sql parameters values
   def self.add_points_prepare_sql(points)
     # TODO: this way of passing params looks as not optimal, PG every time executes a new query and couldn't
-    # prepare it. Also, each point is wrapped in ST_GeomFromText that adds traffic
+    # prepare it. Also, each point is wrapped in ST_GeomFromText that adds traffic.
+    # Maybe it worth to be done via PGSQL UNNEST
     sql_params = []
     sql_params_values = []
     points.each_with_index do |geom, idx|

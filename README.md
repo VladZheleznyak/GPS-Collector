@@ -60,7 +60,16 @@ Finished in 0.10819s
 35 tests, 63 assertions, 0 failures, 0 errors, 0 skips
 ```
 
-!!! The test clears the main db table. Do not use in production environment!
+*The test clears the main db table. Do not use in production environment!*
+
+## Fill DB with random values
+
+Run from the host
+ 
+```bash
+➜ docker exec -it gps-collector_rack_1 rake add_rnd_points[10000]
+  10000 points added, realtime = 0.3697154910041718ms, 27047 points per second
+```
 
 ## Endpoints
 
@@ -69,6 +78,8 @@ Finished in 0.10819s
 `POST` - Accepts GeoJSON point(s) to be inserted into a database table
 
 params: Array of GeoJSON Point objects or Geometry collection
+
+With the current implementation, only 65535 points per packet allowed. 
 
 #### Array of GeoJSON Point objects
 
