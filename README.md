@@ -30,7 +30,7 @@ da4481610c49        mdillon/postgis:9.4   "docker-entrypoint.s…"   23 minutes 
 
 You should now be able:
 
-- connect to YARD server via [http://localhost:8808](http://localhost:8808/docs/GpsCollector) to read the documentation
+- connect to YARD server via [http://localhost:8808](http://localhost:8808/docs/GpsCollector) to read the documentation.
 
 - send requests to the application http://localhost:9292, see details below.
 
@@ -59,6 +59,8 @@ Run from the host
 Finished in 0.10819s
 35 tests, 63 assertions, 0 failures, 0 errors, 0 skips
 ```
+
+!!! The test clears the main db table. Do not use in production environment!
 
 ## Endpoints
 

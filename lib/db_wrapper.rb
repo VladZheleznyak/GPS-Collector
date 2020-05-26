@@ -23,10 +23,17 @@ class DbWrapper
   #   => [["POINT(0 0)"], ["POINT(10 0)"], ["POINT(20 0)"], ["POINT(30 0)"]]
 
   def self.exec_params(sql, params = [])
-    # TODO: move credentials to config
-    # At the moment the multithreading disabled by calling Rack::Lock at config.ru
-    @conn ||= PG.connect(host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector')
+    begin
+      tries ||= 30
 
+      # TODO: move credentials to config
+      # At the moment the multithreading disabled by calling Rack::Lock at config.ru
+      @conn ||= PG.connect(host: 'db', dbname: 'gps_collector', user: 'gps_collector', password: 'gps_collector')
+    rescue PG::ConnectionBad
+      # workaround for docker-composer to wait DB started
+      sleep 1
+      retry unless (tries -= 1).zero?
+    end
     result = @conn.exec_params(sql, params)
     result.values
   end
