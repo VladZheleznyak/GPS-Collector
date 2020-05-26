@@ -5,6 +5,10 @@ AllCops:
 Layout/LineLength:
   Max: 120
 
+Metrics/AbcSize:
+  Exclude:
+    - test/**/* # tests may contain big blocks
+
 Metrics/BlockLength:
   Enabled: true
   Exclude:
@@ -15,6 +19,8 @@ Metrics/CyclomaticComplexity:
 
 Metrics/MethodLength:
   Max: 15 # Default 10 is too strict
+  Exclude:
+    - test/**/* # tests may contain big blocks
 
 Metrics/PerceivedComplexity:
   Max: 9 # Default 7 is too strict

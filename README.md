@@ -77,11 +77,14 @@ Run from the host
 ​
 `POST` - Accepts GeoJSON point(s) to be inserted into a database table
 
-params: Array of GeoJSON Point objects or Geometry collection
+Parameters: 
+- *"Points"*: Array of GeoJSON Point objects or Geometry collection.
 
 With the current implementation, only 65535 points per packet allowed. 
 
-#### Array of GeoJSON Point objects
+Examples:
+
+**Array of GeoJSON Point objects**
 
 ```bash
 ➜ curl --request POST \
@@ -109,7 +112,7 @@ With the current implementation, only 65535 points per packet allowed.
 
 You may copy the curl request to [Insomnia Core](https://insomnia.rest/) to make your experiments easier. 
  
-#### Geometry collection
+**Geometry collection**
 
 All elements in the collection must be "Point" type.
     
@@ -144,9 +147,15 @@ All elements in the collection must be "Point" type.
 ​
 `GET` - Responds w/GeoJSON point(s) within a radius around a point
 
-params: GeoJSON Point and integer radius in feet/meters
+Parameters: 
+- *"Point"*: GeoJSON Point.
+- *"Radius unit of measure"*: optional, "meters" by default. 
+- *"Radius"*: integer radius in feet/meters.
+- *"Use spheroid"*: optional, "true" by default. If false, a faster sphere calculation is used instead of a spheroid.
 
-#### Radius in meters (default)
+Examples:
+
+**Default**
 
 ```bash
 ➜curl --request GET \
@@ -164,7 +173,7 @@ params: GeoJSON Point and integer radius in feet/meters
  }'
 ```
 
-#### Radius in feet
+**Radius in feet**
 
 ```bash
 ➜curl --request GET \
@@ -183,11 +192,34 @@ params: GeoJSON Point and integer radius in feet/meters
  }'
 ```
 
+**Use spheroid false**
+
+```bash
+➜curl --request GET \
+   --url 'http://localhost:9292/points_within_radius?e=3' \
+   --header 'content-type: application/json' \
+   --data '{
+   "Radius":17000000,
+   "Use spheroid": false,
+   "Point":{
+     "type":"Point",
+     "coordinates":[
+       0.01621,
+       0.57422
+     ]
+   }
+ }'
+```
+
 ### Point(s) within a geographical polygon
 
 `GET` - Responds w/GeoJSON point(s) within a geographical polygon
 
-params: GeoJSON Polygon with no holes
+Parameters: 
+- *"Polygon"*: GeoJSON Polygon with no holes.
+- *"Use spheroid"*: optional, "true" by default. If false, a faster sphere calculation is used instead of a spheroid.
+
+Examples:
 
 ```bash
 ➜curl --request GET \

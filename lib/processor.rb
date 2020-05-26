@@ -53,12 +53,12 @@ class Processor
   #   {RGeo::Cartesian::PointImpl}[https://www.rubydoc.info/gems/rgeo/RGeo/Cartesian/PointImpl].
   def self.points_within_radius(params)
     # check params and convert radius to meters
-    radius_meters, center_point = ParamsParser.points_within_radius(params)
+    radius_meters, center_point, use_spheroid = ParamsParser.points_within_radius(params)
 
     # use_spheroid is true by default
     db_result_arr = DbWrapper.exec_params(
-      'SELECT ST_AsText(point) FROM points WHERE ST_Distance(point, ST_GeographyFromText($1)) <= $2',
-      [center_point, radius_meters]
+      'SELECT ST_AsText(point) FROM points WHERE ST_Distance(point, ST_GeographyFromText($1), $2) <= $3',
+      [center_point, use_spheroid, radius_meters]
     )
     DbWrapper.parse_selected_points(db_result_arr)
   end
@@ -75,10 +75,10 @@ class Processor
   # @return [Array<RGeo::Cartesian::PointImpl>] array of
   #   {RGeo::Cartesian::PointImpl}[https://www.rubydoc.info/gems/rgeo/RGeo/Cartesian/PointImpl].
   def self.points_within_polygon(params)
-    polygon = ParamsParser.points_within_polygon(params)
+    polygon, use_spheroid = ParamsParser.points_within_polygon(params)
     db_result_arr = DbWrapper.exec_params(
-      'SELECT ST_AsText(point) FROM points WHERE ST_DWithin(point, ST_GeomFromText($1), 0)',
-      [polygon]
+      'SELECT ST_AsText(point) FROM points WHERE ST_DWithin(point, ST_GeomFromText($1), 0, $2)',
+      [polygon, use_spheroid]
     )
     DbWrapper.parse_selected_points(db_result_arr)
   end

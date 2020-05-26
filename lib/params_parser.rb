@@ -92,13 +92,15 @@ class ParamsParser
   # Calls {check_radius} or {check_point} to get the actual result.
   #
   # @param params [Hash] hash that come from {parse_body}
-  # @return [Numeric, RGeo::Cartesian::PointImpl] radius in meters and
+  # @return [Numeric, RGeo::Cartesian::PointImpl, use_spheroid] radius in meters,
   #   {RGeo::Cartesian::PointImpl}[https://www.rubydoc.info/gems/rgeo/RGeo/Cartesian/PointImpl]
+  #   use_spheroid in terms of PostGIS use_spheroid ST_Distance / ST_DWithin
   def self.points_within_radius(params)
     radius = check_radius(params)
     center_point = check_point(params)
+    use_spheroid = check_use_spheroid(params)
 
-    [radius, center_point]
+    [radius, center_point, use_spheroid]
   end
 
   # Extracts radius from 'Radius' parameter and converts to meters if needed using 'Radius unit of measure'.
@@ -115,7 +117,7 @@ class ParamsParser
     radius_measure = params['Radius unit of measure']
     if radius_measure
       unless %w[meters feet].include?(radius_measure)
-        raise ArgumentError, '"Radius unit of measure" parameter must be "meters" or "feet"'
+        raise ArgumentError, "'Radius unit of measure' parameter must be 'meters' or 'feet'"
       end
 
       # convert from feet to meters using a constant from Wiki
@@ -140,6 +142,19 @@ class ParamsParser
     point
   end
 
+  # Extracts 'Use spheroid' parameter. Returns true by default
+  #
+  # @param params [Hash] hash that come from {parse_body}
+  # @return [bool]
+  # @raise [ArgumentError] if the value is malformed.
+  def self.check_use_spheroid(params)
+    result = params['Use spheroid']
+    result = true if result.nil?
+    raise ArgumentError, "'Use spheroid' parameter must be true or false" unless [true, false].include?(result)
+
+    result
+  end
+
   # Extracts a polygon from 'Polygon' parameter.
   #
   # @param params [Hash] hash that come from {parse_body}
@@ -155,6 +170,7 @@ class ParamsParser
       raise ArgumentError, 'Polygon parameter must have Polygon type'
     end
 
-    polygon
+    use_spheroid = check_use_spheroid(params)
+    [polygon, use_spheroid]
   end
 end

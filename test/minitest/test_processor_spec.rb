@@ -8,7 +8,7 @@ describe Processor do
     @processor = Processor.new
   end
 
-  describe 'add_points' do
+  describe '.add_points' do
     it 'generates SQL for one point well' do
       mock = MiniTest::Mock.new
       mock.expect(:call, ['fake_result']) do |sql, params|
@@ -55,20 +55,21 @@ describe Processor do
     end
   end
 
-  describe 'points_within_radius' do
+  describe '.points_within_radius' do
     it 'generates SQL well' do
       exec_params_mock = MiniTest::Mock.new
       exec_params_mock.expect(:call, ['fake_result']) do |sql, params|
         # sql should be formed well
-        _(sql).must_equal 'SELECT ST_AsText(point) FROM points WHERE ST_Distance(point, ST_GeographyFromText($1)) <= $2'
+        _(sql).must_equal 'SELECT ST_AsText(point) FROM points WHERE ST_Distance(point, ST_GeographyFromText($1), $2)'\
+          ' <= $3'
 
         # param types should be proper
         _(params[0]).must_be_kind_of RGeo::Cartesian::PointImpl
 
         # param values should be proper
         _(params[0].as_text).must_equal 'POINT (1.0 2.0)'
-
-        _(params[1]).must_equal 10
+        _(params[1]).must_equal true
+        _(params[2]).must_equal 10
       end
 
       parse_selected_points_mock = MiniTest::Mock.new
@@ -87,18 +88,19 @@ describe Processor do
     end
   end
 
-  describe 'points_within_polygon' do
+  describe '.points_within_polygon' do
     it 'generates SQL well' do
       exec_params_mock = MiniTest::Mock.new
       exec_params_mock.expect(:call, ['fake_result']) do |sql, params|
         # sql should be formed well
-        _(sql).must_equal 'SELECT ST_AsText(point) FROM points WHERE ST_DWithin(point, ST_GeomFromText($1), 0)'
+        _(sql).must_equal 'SELECT ST_AsText(point) FROM points WHERE ST_DWithin(point, ST_GeomFromText($1), 0, $2)'
 
         # param types should be proper
         _(params[0]).must_be_kind_of RGeo::Cartesian::PolygonImpl
 
         # param values should be proper
         _(params[0].as_text).must_equal 'POLYGON ((0.0 -5.0, 25.0 -5.0, 15.0 0.0, 25.0 5.0, 0.0 5.0, 0.0 -5.0))'
+        _(params[1]).must_equal true
       end
 
       parse_selected_points_mock = MiniTest::Mock.new

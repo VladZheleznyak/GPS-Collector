@@ -3,9 +3,84 @@
 require 'minitest/autorun'
 require 'params_parser'
 
+def use_spheroid_shared_tests
+  describe 'when "Use spheroid" specified' do
+    it 'must accept "true"' do
+      params = {
+        'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
+        'Radius' => 10,
+        'Use spheroid' => true
+      }
+
+      _, _, use_spheroid = ParamsParser.points_within_radius(params)
+      _(use_spheroid).must_equal true
+    end
+
+    it 'must accept "false"' do
+      params = {
+        'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
+        'Radius' => 10,
+        'Use spheroid' => false
+      }
+
+      _, _, use_spheroid = ParamsParser.points_within_radius(params)
+      _(use_spheroid).must_equal false
+    end
+
+    it 'must raise ArgumentError if the value isn\'t whitelisted' do
+      params = {
+        'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
+        'Radius' => 10,
+        'Use spheroid' => 'qqqq'
+      }
+      _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
+    end
+  end
+
+  it 'must raise ArgumentError if Point parameter absent' do
+    params = {
+      'Radius' => 10
+    }
+    _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
+  end
+
+  describe 'when Point specified' do
+    it 'must raise ArgumentError if Point parameter is not valid GeoJSON' do
+      params = {
+        'Point' => { 'type' => 'ABC', 'coordinates' => [0, 0] },
+        'Radius' => 10
+      }
+      _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
+    end
+
+    it 'must raise ArgumentError if valid GeoJSON passed but not Point' do
+      params = {
+        'Point' => { 'type' => 'Polygon', 'coordinates' => [[[0, 0], [1, 1], [0, 1], [0, 0]]] },
+        'Radius' => 10
+      }
+
+      _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
+    end
+  end
+end
+
 describe ParamsParser do
+  describe '.parse_body' do
+    it 'must raise ArgumentError if body is empty' do
+      _ { ParamsParser.parse_body(nil) }.must_raise ArgumentError
+    end
+
+    it 'must raise ArgumentError if body is an empty string' do
+      _ { ParamsParser.parse_body(' ') }.must_raise ArgumentError
+    end
+
+    it 'must raise ArgumentError if body is n\'t JSON' do
+      _ { ParamsParser.parse_body('{{{') }.must_raise ArgumentError
+    end
+  end
+
   # params from the spec: Array of GeoJSON Point objects or Geometry collection
-  describe 'add_points' do
+  describe '.add_points' do
     describe 'with improper parameters' do
       it 'must raise ArgumentError if Points parameter absent' do
         params = {}
@@ -84,38 +159,17 @@ describe ParamsParser do
   end
 
   # params from the spec: GeoJSON Point and integer radius in feet/meters
-  describe 'points_within_radius' do
+  describe '.points_within_radius' do
     it 'must process well-defined parameters' do
       params = {
         'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
         'Radius' => 10
       }
 
-      radius, center_point = ParamsParser.points_within_radius(params)
+      radius, center_point, use_spheroid = ParamsParser.points_within_radius(params)
       _(radius).must_equal 10
       _(center_point).must_be_kind_of RGeo::Cartesian::PointImpl
-    end
-
-    it 'must accept "Radius unit of measure" => "meters" parameter' do
-      params = {
-        'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
-        'Radius' => 10,
-        'Radius unit of measure' => 'meters'
-      }
-
-      radius, = ParamsParser.points_within_radius(params)
-      _(radius).must_equal 10
-    end
-
-    it 'must accept "Radius unit of measure" => "feet" parameter' do
-      params = {
-        'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
-        'Radius' => 10,
-        'Radius unit of measure' => 'feet'
-      }
-
-      radius, = ParamsParser.points_within_radius(params)
-      _(radius).must_equal 3.048
+      _(use_spheroid).must_equal true # default value
     end
 
     it 'must raise ArgumentError if Radius parameter absent' do
@@ -125,65 +179,70 @@ describe ParamsParser do
       _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
     end
 
-    it 'must raise ArgumentError if Radius isn\'t a number' do
-      params = {
-        'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
-        'Radius' => '10'
-      }
-      _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
+    describe 'when Radius specified' do
+      it 'must raise ArgumentError if Radius isn\'t a number' do
+        params = {
+          'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
+          'Radius' => '10'
+        }
+        _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
+      end
+
+      it 'must raise ArgumentError if Radius is negative' do
+        params = {
+          'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
+          'Radius' => -10
+        }
+        _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
+      end
     end
 
-    it 'must raise ArgumentError if Radius is negative' do
-      params = {
-        'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
-        'Radius' => -10
-      }
-      _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
+    describe 'when "Radius unit of measure" specified' do
+      it 'must accept "meters"' do
+        params = {
+          'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
+          'Radius' => 10,
+          'Radius unit of measure' => 'meters'
+        }
+
+        radius, = ParamsParser.points_within_radius(params)
+        _(radius).must_equal 10
+      end
+
+      it 'must accept "feet"' do
+        params = {
+          'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
+          'Radius' => 10,
+          'Radius unit of measure' => 'feet'
+        }
+
+        radius, = ParamsParser.points_within_radius(params)
+        _(radius).must_equal 3.048
+      end
+
+      it 'must raise ArgumentError if the value isn\'t whitelisted' do
+        params = {
+          'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
+          'Radius' => 10,
+          'Radius unit of measure' => 'inches'
+        }
+        _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
+      end
     end
 
-    it 'must raise ArgumentError if "Radius unit of measure" isn\'t whitelisted' do
-      params = {
-        'Point' => { 'type' => 'Point', 'coordinates' => [0, 0] },
-        'Radius' => 10,
-        'Radius unit of measure' => 'inches'
-      }
-      _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
-    end
-
-    it 'must raise ArgumentError if Point parameter absent' do
-      params = {
-        'Radius' => 10
-      }
-      _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
-    end
-
-    it 'must raise ArgumentError if Point parameter is not valid GeoJSON' do
-      params = {
-        'Point' => { 'type' => 'ABC', 'coordinates' => [0, 0] },
-        'Radius' => 10
-      }
-      _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
-    end
-
-    it 'must raise ArgumentError if valid GeoJSON passed but not Point' do
-      params = {
-        'Point' => { 'type' => 'Polygon', 'coordinates' => [[[0, 0], [1, 1], [0, 1], [0, 0]]] },
-        'Radius' => 10
-      }
-
-      _ { ParamsParser.points_within_radius(params) }.must_raise ArgumentError
-    end
+    use_spheroid_shared_tests
   end
 
   # params from the spec: GeoJSON Polygon with no holes
-  describe 'points_within_polygon' do
+  describe '.points_within_polygon' do
     it 'must process well-defined Polygon' do
       params = {
         'Polygon' => { 'type' => 'Polygon', 'coordinates' => [[[0, 0], [1, 1], [0, 1], [0, 0]]] }
       }
 
-      result = ParamsParser.points_within_polygon(params)
-      _(result).must_be_kind_of RGeo::Cartesian::PolygonImpl
+      polygon, use_spheroid = ParamsParser.points_within_polygon(params)
+      _(polygon).must_be_kind_of RGeo::Cartesian::PolygonImpl
+      _(use_spheroid).must_equal true
     end
 
     it 'must raise ArgumentError if Polygon parameter absent' do
@@ -214,19 +273,6 @@ describe ParamsParser do
 
       _ { ParamsParser.points_within_polygon(params) }.must_raise RGeo::Error::RGeoError
     end
-  end
-
-  describe 'parse_body' do
-    it 'must raise ArgumentError if body is empty' do
-      _ { ParamsParser.parse_body(nil) }.must_raise ArgumentError
-    end
-
-    it 'must raise ArgumentError if body is an empty string' do
-      _ { ParamsParser.parse_body(' ') }.must_raise ArgumentError
-    end
-
-    it 'must raise ArgumentError if body is n\'t JSON' do
-      _ { ParamsParser.parse_body('{{{') }.must_raise ArgumentError
-    end
+    use_spheroid_shared_tests
   end
 end
