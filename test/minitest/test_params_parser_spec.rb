@@ -3,6 +3,7 @@
 require 'minitest/autorun'
 require 'params_parser'
 
+# shared module for 'Use spheroid' parameter for points_within_radius and points_within_polygon
 def use_spheroid_shared_tests
   describe 'when "Use spheroid" specified' do
     it 'must accept "true"' do

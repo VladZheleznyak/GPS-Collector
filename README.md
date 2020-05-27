@@ -82,8 +82,6 @@ If you insert more than 100k of records this may require docker reconfiguration 
 Parameters: 
 - *"Points"*: Array of GeoJSON Point objects or Geometry collection.
 
-With the current implementation, only 65535 points per packet allowed. 
-
 Examples:
 
 **Array of GeoJSON Point objects**
@@ -232,48 +230,11 @@ Examples:
      "type":"Polygon",
      "coordinates":[
        [
-         [
-           -120,
-           60
-         ],
-         [
-           120,
-           60
-         ],
-         [
-           120,
-           -60
-         ],
-         [
-           -120,
-           -60
-         ],
-         [
-           -120,
-           60
-         ]
-       ],
-       [
-         [
-           -60,
-           30
-         ],
-         [
-           60,
-           30
-         ],
-         [
-           60,
-           -30
-         ],
-         [
-           -60,
-           -30
-         ],
-         [
-           -60,
-           30
-         ]
+         [-120, 60],
+         [120, 60],
+         [120, -60],
+         [-120, -60],
+         [-120, 60]
        ]
      ]
    }
